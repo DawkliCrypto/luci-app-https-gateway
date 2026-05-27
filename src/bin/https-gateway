@@ -54,8 +54,15 @@ get_cert_path() {
 		echo "${base}/_wildcard.${stripped}"
 		return 0
 	fi
-	# Fallback: return expected path (may not exist yet)
-	echo "${base}/${domain}"
+	# Fallback: use _wildcard. prefix for wildcard domains (avoids * in filenames)
+	case "$domain" in
+		\*.*)
+			echo "${base}/_wildcard.${stripped}"
+			;;
+		*)
+			echo "${base}/${domain}"
+			;;
+	esac
 	return 1
 }
 
@@ -244,18 +251,18 @@ _find_cert_for_domain() {
 
 	# Direct match
 	if [ "$cert_domain" = "$target_domain" ]; then
-		cert_path=$(get_cert_path "$cert_domain" 2>/dev/null || echo "/etc/ssl/acme/${cert_domain}")
+		cert_path=$(get_cert_path "$cert_domain") || true
 		cert_section="$section"
 		return 0
 	fi
 
 	# Wildcard match: *.example.com covers sub.example.com
 	case "$cert_domain" in
-		\*.*)
+		\*.*)  
 			local wildcard_base="${cert_domain#\*.}"
 			local target_base="${target_domain#*.}"
 			if [ "$wildcard_base" = "$target_base" ] || [ "$wildcard_base" = "$target_domain" ]; then
-				cert_path=$(get_cert_path "$cert_domain" 2>/dev/null || echo "/etc/ssl/acme/${cert_domain}")
+				cert_path=$(get_cert_path "$cert_domain") || true
 				cert_section="$section"
 				return 0
 			fi
