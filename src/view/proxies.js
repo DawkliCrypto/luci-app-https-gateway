@@ -55,6 +55,12 @@ return view.extend({
 			_('A friendly name for this rule, e.g. "NAS WebUI", "Home Assistant".'));
 		o.placeholder = 'My Service';
 		o.width = '15%';
+		o.rmempty = false;
+		o.validate = function(section_id, value) {
+			if (!value || !value.trim())
+				return _('Name cannot be empty');
+			return true;
+		};
 
 		o = s.option(form.Value, 'domain', _('Domain'),
 			_('Domain for this rule (must be covered by a configured certificate).') +
