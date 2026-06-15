@@ -125,6 +125,18 @@ return view.extend({
 		o.editable = true;
 		o.width = '1%';
 
+		o = s.option(form.Value, 'max_body_size', _('Max Body Size'),
+			_('Maximum client request body, e.g. 50m. Maps to nginx client_max_body_size. Leave empty for the nginx default (1m); 0 disables the limit.'));
+		o.placeholder = '50m';
+		o.width = '8%';
+		o.validate = function(section_id, value) {
+			if (!value)
+				return true;
+			if (!/^[0-9]+[kKmMgG]?$/.test(value))
+				return _('Enter a size like 50m, 1g, or 0 (digits with optional k/m/g suffix)');
+			return true;
+		};
+
 		return m.render();
 	}
 });

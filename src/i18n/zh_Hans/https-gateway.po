@@ -225,6 +225,15 @@ msgstr "WebSocket"
 msgid "Enable Upgrade/Connection headers for WebSocket long-lived connections."
 msgstr "开启后添加 Upgrade/Connection 头，支持 WebSocket 长连接。"
 
+msgid "Max Body Size"
+msgstr "最大请求体"
+
+msgid "Maximum client request body, e.g. 50m. Maps to nginx client_max_body_size. Leave empty for the nginx default (1m); 0 disables the limit."
+msgstr "客户端请求体上限，例如 50m。对应 nginx client_max_body_size。留空则用 nginx 默认值（1m）；填 0 表示不限制。"
+
+msgid "Enter a size like 50m, 1g, or 0 (digits with optional k/m/g suffix)"
+msgstr "请输入如 50m、1g 或 0 的大小（数字，可带 k/m/g 后缀）"
+
 msgid "HTTPS Gateway"
 msgstr "HTTPS 网关"
 

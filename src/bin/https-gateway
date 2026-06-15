@@ -37,6 +37,10 @@ validate_upstream() {
 	echo "$1" | grep -qE '^https?://[][a-zA-Z0-9.:-]+(/[^ ]*)?$' || return 1
 }
 
+validate_size() {
+	echo "$1" | grep -qE '^[0-9]+[kKmMgG]?$' || return 1
+}
+
 get_cert_path() {
 	local domain="$1"
 	local base="/etc/ssl/acme"
@@ -274,12 +278,13 @@ _generate_location() {
 	local section="$1"
 	local target_domain="$2"
 
-	local enabled domain location upstream websocket
+	local enabled domain location upstream websocket max_body_size
 	config_get enabled "$section" enabled '1'
 	config_get domain "$section" domain ''
 	config_get location "$section" location ''
 	config_get upstream "$section" upstream ''
 	config_get websocket "$section" websocket '0'
+	config_get max_body_size "$section" max_body_size ''
 
 	[ "$enabled" = "1" ] || return 0
 	[ "$domain" = "$target_domain" ] || return 0
@@ -294,6 +299,10 @@ _generate_location() {
 		log "WARNING: Invalid upstream '$upstream' in proxy '$section', skipping"
 		return 0
 	}
+	if [ -n "$max_body_size" ] && ! validate_size "$max_body_size"; then
+		log "WARNING: Invalid max_body_size '$max_body_size' in proxy '$section', ignoring"
+		max_body_size=""
+	fi
 
 	cat <<EOF
     location ${location} {
@@ -304,6 +313,8 @@ _generate_location() {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto https;
 EOF
+
+	[ -n "$max_body_size" ] && echo "        client_max_body_size ${max_body_size};"
 
 	if [ "$websocket" = "1" ]; then
 		cat <<EOF

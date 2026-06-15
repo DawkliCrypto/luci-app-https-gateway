@@ -295,6 +295,18 @@ msgstr ""
 msgid "Enable Upgrade/Connection headers for WebSocket long-lived connections."
 msgstr ""
 
+#: src/view/proxies.js
+msgid "Max Body Size"
+msgstr ""
+
+#: src/view/proxies.js
+msgid "Maximum client request body, e.g. 50m. Maps to nginx client_max_body_size. Leave empty for the nginx default (1m); 0 disables the limit."
+msgstr ""
+
+#: src/view/proxies.js
+msgid "Enter a size like 50m, 1g, or 0 (digits with optional k/m/g suffix)"
+msgstr ""
+
 #: src/share/menu.d/luci-app-https-gateway.json
 msgid "HTTPS Gateway"
 msgstr ""
