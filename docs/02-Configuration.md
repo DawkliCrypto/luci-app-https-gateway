@@ -81,6 +81,7 @@ Each proxy rule maps a domain + path to a backend upstream.
 | `location` | string | `/` | URL path prefix |
 | `upstream` | string | — | Backend address (e.g. `http://192.168.0.100:5000`) |
 | `websocket` | bool | `0` | Enable WebSocket Upgrade headers |
+| `max_body_size` | string | — | Max client request body, e.g. `50m` (nginx `client_max_body_size`). Empty = nginx default (1m); `0` = unlimited |
 
 ### Example: Proxy NAS to HTTPS
 
@@ -105,6 +106,19 @@ uci set https_gateway.@proxy[-1].domain='ha.example.com'
 uci set https_gateway.@proxy[-1].location='/'
 uci set https_gateway.@proxy[-1].upstream='http://192.168.0.200:8123'
 uci set https_gateway.@proxy[-1].websocket='1'
+uci commit https_gateway
+```
+
+### Example: App That Accepts Large Uploads
+
+```sh
+uci add https_gateway proxy
+uci set https_gateway.@proxy[-1].enabled='1'
+uci set https_gateway.@proxy[-1].name='CMS'
+uci set https_gateway.@proxy[-1].domain='admin.example.com'
+uci set https_gateway.@proxy[-1].location='/'
+uci set https_gateway.@proxy[-1].upstream='http://192.168.0.200:8095'
+uci set https_gateway.@proxy[-1].max_body_size='50m'
 uci commit https_gateway
 ```
 

@@ -36,6 +36,7 @@ generate_location_block() {
 	local location="$1"
 	local upstream="$2"
 	local websocket="${3:-0}"
+	local max_body_size="${4:-}"
 
 	cat <<EOF
     location ${location} {
@@ -46,6 +47,8 @@ generate_location_block() {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto https;
 EOF
+
+	[ -n "$max_body_size" ] && echo "        client_max_body_size ${max_body_size};"
 
 	if [ "$websocket" = "1" ]; then
 		cat <<EOF
@@ -155,6 +158,14 @@ assert_contains "$OUTPUT" "proxy_pass http://192.168.0.50:3000" "upstream correc
 it "handles HTTPS upstream"
 OUTPUT=$(generate_location_block "/" "https://external.service.com:8443")
 assert_contains "$OUTPUT" "proxy_pass https://external.service.com:8443" "HTTPS upstream"
+
+it "emits client_max_body_size when set"
+OUTPUT=$(generate_location_block "/" "http://192.168.0.100:8095" "1" "50m")
+assert_contains "$OUTPUT" "client_max_body_size 50m;" "body size directive emitted"
+
+it "omits client_max_body_size when empty"
+OUTPUT=$(generate_location_block "/" "http://192.168.0.100:8095" "0" "")
+assert_not_contains "$OUTPUT" "client_max_body_size" "no body size directive by default"
 
 # ============================================================
 describe "nginx config security"

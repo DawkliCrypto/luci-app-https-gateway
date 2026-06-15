@@ -56,5 +56,18 @@ assert_match "ipv6" "$UP_RE" "http://[::1]:8080"
 ! echo "ftp://bad" | grep -qE "$UP_RE" && { PASS=$((PASS+1)); echo "  ✓ rejects non-http"; } || { FAIL=$((FAIL+1)); echo "  ✗ rejects non-http"; }
 
 echo ""
+
+# Test: validate_size (client_max_body_size)
+echo "[4] Body size validation regex"
+SIZE_RE='^[0-9]+[kKmMgG]?$'
+
+assert_match "megabytes" "$SIZE_RE" "50m"
+assert_match "gigabytes" "$SIZE_RE" "1G"
+assert_match "bare bytes" "$SIZE_RE" "1024"
+assert_match "zero (unlimited)" "$SIZE_RE" "0"
+! echo "50mb" | grep -qE "$SIZE_RE" && { PASS=$((PASS+1)); echo "  ✓ rejects invalid suffix"; } || { FAIL=$((FAIL+1)); echo "  ✗ rejects invalid suffix"; }
+! echo "abc" | grep -qE "$SIZE_RE" && { PASS=$((PASS+1)); echo "  ✓ rejects non-numeric"; } || { FAIL=$((FAIL+1)); echo "  ✗ rejects non-numeric"; }
+
+echo ""
 echo "=== Results: ${PASS} passed, ${FAIL} failed ==="
 [ "$FAIL" -eq 0 ] && exit 0 || exit 1
