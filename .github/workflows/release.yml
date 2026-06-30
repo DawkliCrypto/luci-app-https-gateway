@@ -33,16 +33,16 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential gawk unzip file wget python3 \
-            libncurses-dev zlib1g-dev libssl-dev zstd gcc-multilib
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq build-essential gawk unzip file wget \
+            python3 libncurses-dev zstd swig > /dev/null
 
       - name: Cache OpenWrt SDK
         uses: actions/cache@v4
         id: cache-sdk
         with:
           path: sdk
-          key: openwrt-sdk-${{ matrix.sdk_name }}
+          key: openwrt-sdk-${{ matrix.sdk_name }}-feeds-v2
 
       - name: Download OpenWrt SDK
         if: steps.cache-sdk.outputs.cache-hit != 'true'
@@ -53,25 +53,28 @@ jobs:
           tar -xf sdk.tar.zst --strip-components=1 -C sdk
           rm sdk.tar.zst
 
-      - name: Prepare package source
-        run: |
-          mkdir -p sdk/package/${{ env.PKG_NAME }}
-          cp -r src Makefile sdk/package/${{ env.PKG_NAME }}/
-          # Inject package version from the git tag (single source of truth)
-          sed -i "s/^PKG_VERSION:=.*/PKG_VERSION:=${{ steps.version.outputs.version }}/" \
-            sdk/package/${{ env.PKG_NAME }}/Makefile
-          grep ^PKG_VERSION sdk/package/${{ env.PKG_NAME }}/Makefile
-
-      - name: Update feeds
+      - name: Update feeds (only on cache miss)
+        if: steps.cache-sdk.outputs.cache-hit != 'true'
         working-directory: sdk
         run: |
-          ./scripts/feeds update -a
-          ./scripts/feeds install luci-base rpcd-mod-luci nginx-ssl acme-acmesh acme-acmesh-dnsapi curl ca-bundle ca-certificates
+          # Only install luci feed - that's all we need for luci.mk
+          sed -i '/^src-git/!d' feeds.conf.default
+          ./scripts/feeds update luci base -a 2>/dev/null || true
+          ./scripts/feeds install luci-base
+
+      - name: Prepare package source
+        run: |
+          rm -rf sdk/package/${{ env.PKG_NAME }}
+          mkdir -p sdk/package/${{ env.PKG_NAME }}
+          cp -r src Makefile sdk/package/${{ env.PKG_NAME }}/
+          sed -i "s/^PKG_VERSION:=.*/PKG_VERSION:=${{ steps.version.outputs.version }}/" \
+            sdk/package/${{ env.PKG_NAME }}/Makefile
 
       - name: Build package
         working-directory: sdk
         run: |
-          make defconfig
+          echo "CONFIG_PACKAGE_luci-app-https-gateway=y" > .config
+          make defconfig 2>/dev/null
           make package/${{ env.PKG_NAME }}/compile V=s -j$(nproc) || \
           make package/${{ env.PKG_NAME }}/compile V=s -j1
 
@@ -79,7 +82,6 @@ jobs:
         run: |
           mkdir -p dist
           find sdk/bin -name "${PKG_NAME}*.apk" -exec cp {} dist/ \;
-          # Rename with arch suffix for clarity
           for f in dist/*.apk; do
             [ -f "$f" ] || continue
             base=$(basename "$f" .apk)
@@ -110,21 +112,10 @@ jobs:
           path: artifacts
           merge-multiple: true
 
-      - name: Build source package
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          ARCHIVE="${{ env.PKG_NAME }}_${VERSION}_src.tar.gz"
-          mkdir -p release "dist/${{ env.PKG_NAME }}"
-          cp -r src Makefile "dist/${{ env.PKG_NAME }}/"
-          tar -czf "release/${ARCHIVE}" -C dist "${{ env.PKG_NAME }}"
-        env:
-          PKG_NAME: ${{ env.PKG_NAME }}
-
       - name: Prepare release assets
         run: |
           mkdir -p release
           cp artifacts/*.apk release/ 2>/dev/null || true
-          # Source tarball
           VERSION="${{ steps.version.outputs.version }}"
           ARCHIVE="${{ env.PKG_NAME }}_${VERSION}_src.tar.gz"
           mkdir -p "tmp/${{ env.PKG_NAME }}"
@@ -139,23 +130,14 @@ jobs:
           body: |
             ## Installation
 
-            ### Direct install on router
             ```sh
             # Download the .apk matching your architecture, then:
             apk add --allow-untrusted luci-app-https-gateway-*.apk
             ```
 
-            ### Build from source (OpenWrt SDK)
+            ## Build from source (OpenWrt SDK)
             ```sh
             tar -xzf ${{ env.PKG_NAME }}_${{ steps.version.outputs.version }}_src.tar.gz -C package/
             make package/${{ env.PKG_NAME }}/compile
             ```
-
-            ## Architectures
-            | File | Target |
-            |------|--------|
-            | `*_x86_64.apk` | x86_64 (VM, PC) |
-            | `*_aarch64_cortex-a53.apk` | MediaTek Filogic (MT7981/7986) |
-            | `*_aarch64_generic.apk` | Rockchip ARM64 |
-            | `*_arm_cortex-a7_neon-vfpv4.apk` | Allwinner sunxi |
           files: release/*

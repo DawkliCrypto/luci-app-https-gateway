@@ -10,7 +10,7 @@ PKG_MAINTAINER:=haizi
 
 LUCI_TITLE:=LuCI HTTPS Gateway - Reverse Proxy Manager
 LUCI_DESCRIPTION:=Manage nginx reverse proxy with automatic ACME certificates and local DNS for LAN services
-LUCI_DEPENDS:=+nginx +acme-acmesh +acme-acmesh-dnsapi +curl +ca-bundle +ca-certificates
+LUCI_DEPENDS:=+acme-acmesh +acme-acmesh-dnsapi +curl +ca-bundle +ca-certificates
 LUCI_PKGARCH:=all
 
 PKG_PO_VERSION:=$(PKG_VERSION)-$(PKG_RELEASE)
