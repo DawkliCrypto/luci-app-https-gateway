@@ -66,6 +66,7 @@ return view.extend({
 		o = s.option(form.Flag, 'auto_dns', _('Automatic Local DNS'),
 			_('Automatically add domain → router IP mappings to dnsmasq so LAN devices resolve to this gateway.'));
 		o.default = '1';
+		o.rmempty = false;
 
 		return m.render().then(function(node) {
 			/* ── Dynamic credentials hint ──────────────────────── */
