@@ -152,6 +152,10 @@ msgid "Cloudflare (dns_cf)"
 msgstr ""
 
 #: src/view/overview.js
+msgid "IONOS DNS (dns_ionos)"
+msgstr ""
+
+#: src/view/overview.js
 msgid "Tencent DNSPod (dns_dp)"
 msgstr ""
 

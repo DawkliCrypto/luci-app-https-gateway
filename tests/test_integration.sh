@@ -74,6 +74,9 @@ assert_exit_code 1 validate_global_config "notanemail" "dns_ali"
 it "accepts email with subdomain"
 assert_exit_code 0 validate_global_config "admin@mail.example.com" "dns_cf"
 
+it "exposes IONOS DNS provider in the settings UI"
+assert_true grep -q "dns_ionos" src/view/settings.js # exposes IONOS DNS provider in the settings UI
+
 # ============================================================
 describe "Service state transitions"
 # ============================================================

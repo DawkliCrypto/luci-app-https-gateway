@@ -117,6 +117,9 @@ msgstr "阿里云 DNS (dns_ali)"
 msgid "Cloudflare (dns_cf)"
 msgstr "Cloudflare (dns_cf)"
 
+msgid "IONOS DNS (dns_ionos)"
+msgstr "IONOS DNS (dns_ionos)"
+
 msgid "Tencent DNSPod (dns_dp)"
 msgstr "腾讯云 DNSPod (dns_dp)"
 

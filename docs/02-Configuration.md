@@ -22,6 +22,7 @@ All settings are stored in UCI at `/etc/config/https_gateway`. You can edit via 
 |----------|---------------------|---------------------|
 | Alibaba Cloud | `dns_ali` | `Ali_Key="..."` `Ali_Secret="..."` |
 | Cloudflare | `dns_cf` | `CF_Key="..."` `CF_Email="..."` |
+| IONOS | `dns_ionos` | `IONOS_PREFIX="..."` `IONOS_SECRET="..."` |
 | Tencent DNSPod | `dns_dp` | `DP_Id="..."` `DP_Key="..."` |
 | GoDaddy | `dns_gd` | `GD_Key="..."` `GD_Secret="..."` |
 

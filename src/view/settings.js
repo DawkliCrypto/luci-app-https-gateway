@@ -8,7 +8,8 @@ var DNS_HINTS = {
 	dns_ali: 'Ali_Key="your-access-key"\nAli_Secret="your-access-secret"',
 	dns_cf:  'CF_Token="your-cloudflare-api-token"',
 	dns_dp:  'DP_Id="your-id"\nDP_Key="your-key"',
-	dns_gd:  'GD_Key="your-api-key"\nGD_Secret="your-api-secret"'
+	dns_gd:  'GD_Key="your-api-key"\nGD_Secret="your-api-secret"',
+	dns_ionos: 'IONOS_PREFIX="your-prefix"\nIONOS_SECRET="your-secret"'
 };
 
 return view.extend({
@@ -47,6 +48,7 @@ return view.extend({
 		o.value('dns_cf', _('Cloudflare (dns_cf)'));
 		o.value('dns_dp', _('Tencent DNSPod (dns_dp)'));
 		o.value('dns_gd', _('GoDaddy (dns_gd)'));
+		o.value('dns_ionos', _('IONOS DNS (dns_ionos)'));
 
 		o = s.option(form.DynamicList, 'credentials', _('DNS API Credentials'),
 			_('Key=Value pairs for the selected DNS provider. The required keys are shown below after selecting a provider.'));
