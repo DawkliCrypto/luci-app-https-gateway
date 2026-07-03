@@ -10,7 +10,7 @@ permissions:
 
 env:
   PKG_NAME: luci-app-https-gateway
-  OPENWRT_VERSION: "25.12.4"
+  OPENWRT_VERSION: "25.12.5"
 
 jobs:
   build:
