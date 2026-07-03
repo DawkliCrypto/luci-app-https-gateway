@@ -21,7 +21,7 @@ jobs:
         include:
           - arch: aarch64_cortex-a53
             sdk_target: mediatek/filogic
-            sdk_name: openwrt-sdk-25.12.4-mediatek-filogic_gcc-14.3.0_musl.Linux-x86_64
+            sdk_name: openwrt-sdk-25.12.5-mediatek-filogic_gcc-14.3.0_musl.Linux-x86_64
 
     steps:
       - name: Checkout
