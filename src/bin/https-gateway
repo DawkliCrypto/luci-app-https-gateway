@@ -312,6 +312,7 @@ _generate_location() {
 	cat <<EOF
     location ${location} {
         proxy_pass ${upstream};
+		proxy_redirect / ${location};
         proxy_http_version 1.1;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;

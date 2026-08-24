@@ -41,6 +41,7 @@ generate_location_block() {
 	cat <<EOF
     location ${location} {
         proxy_pass ${upstream};
+        proxy_redirect / ${location};
         proxy_http_version 1.1;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -154,6 +155,7 @@ it "handles sub-path location"
 OUTPUT=$(generate_location_block "/api/v1/" "http://192.168.0.50:3000")
 assert_contains "$OUTPUT" "location /api/v1/ {" "sub-path in location"
 assert_contains "$OUTPUT" "proxy_pass http://192.168.0.50:3000" "upstream correct"
+assert_contains "$OUTPUT" "proxy_redirect / /api/v1/" "rewrites upstream redirects under sub-path"
 
 it "handles HTTPS upstream"
 OUTPUT=$(generate_location_block "/" "https://external.service.com:8443")
