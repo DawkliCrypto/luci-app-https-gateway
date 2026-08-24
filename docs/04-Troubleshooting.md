@@ -112,8 +112,9 @@ ubus list | grep https-gateway
 **Explanation**: When the gateway is enabled, uhttpd moves to port 8080/8443.
 
 **Fix**:
-- Access LuCI at `http://192.168.0.1:8080` or `https://192.168.0.1:8443`
+- uhttpd listens on `127.0.0.1:8080`, so it is intentionally not reachable directly from the LAN
 - Or add a proxy rule for the router itself: `router.example.com → http://127.0.0.1:8080`
+- For a direct backend test, run `curl -I http://127.0.0.1:8080/cgi-bin/luci/` over SSH on the router
 
 ### DNS Not Resolving on LAN Clients
 
