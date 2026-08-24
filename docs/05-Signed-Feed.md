@@ -4,13 +4,13 @@ The project publishes a signed OpenWrt 25.x APK package for:
 
 - `aarch64_cortex-a53`
 
-The feed is published by the `Signed APK Feed` GitHub Actions workflow on every `v*` tag. The repository's private signing key is stored only in the GitHub Actions secret `APK_SEC_PEM`; the public key is available at:
+The feed is published by the `Release` GitHub Actions workflow on every `v*` tag. The source repository is private. The repository's private signing key is stored only in the GitHub Actions secret `APK_SEC_PEM`; the public key is published with the feed at:
 
 ```text
 https://DawkliCrypto.github.io/luci-app-https-gateway/keys/https-gateway-apk.pem
 ```
 
-GitHub Pages must be enabled for the repository's `gh-pages` branch after the first feed run.
+GitHub Pages must be enabled for the private repository using the `gh-pages` branch and `/(root)` folder. GitHub Pages for private repositories requires a GitHub plan that supports private-repository Pages. If Pages cannot be enabled, publish the feed from a separate public repository instead.
 
 ## Install on OpenWrt 25.x
 

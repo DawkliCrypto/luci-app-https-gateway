@@ -89,7 +89,7 @@ apk add luci-app-https-gateway
 EOF
 ```
 
-See the [signed feed installation guide](docs/05-Signed-Feed.md) for details.
+See the [signed feed installation guide](docs/05-Signed-Feed.md) for details. The source repository is private, while the APK feed must remain publicly reachable through GitHub Pages for routers to access it.
 
 ### Pre-built Package (OpenWrt 23.x)
 
