@@ -1,0 +1,148 @@
+name: Signed APK Feed
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  PKG_NAME: luci-app-https-gateway
+  OPENWRT_VERSION: "25.12.5"
+
+jobs:
+  build:
+    name: Build signed feed (${{ matrix.arch }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            sdk_target: x86/64
+            sdk_name: openwrt-sdk-25.12.5-x86-64_gcc-14.3.0_musl.Linux-x86_64
+          - arch: aarch64_cortex-a53
+            sdk_target: mediatek/filogic
+            sdk_name: openwrt-sdk-25.12.5-mediatek-filogic_gcc-14.3.0_musl.Linux-x86_64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq build-essential gawk unzip file wget \
+            python3 libncurses-dev zstd swig rsync jq ca-certificates
+
+      - name: Download OpenWrt SDK
+        run: |
+          SDK_URL="https://downloads.openwrt.org/releases/${OPENWRT_VERSION}/targets/${{ matrix.sdk_target }}/${{ matrix.sdk_name }}.tar.zst"
+          wget -q "$SDK_URL" -O sdk.tar.zst
+          mkdir -p sdk
+          tar -xf sdk.tar.zst --strip-components=1 -C sdk
+          rm sdk.tar.zst
+
+      - name: Prepare feeds
+        working-directory: sdk
+        run: |
+          sed -i '/^src-git/!d' feeds.conf.default
+          ./scripts/feeds update luci base -a
+          ./scripts/feeds install luci-base
+
+      - name: Install APK signing key
+        env:
+          APK_SEC_PEM: ${{ secrets.APK_SEC_PEM }}
+        run: |
+          test -n "$APK_SEC_PEM"
+          printf '%s\n' "$APK_SEC_PEM" > sdk/private-key.pem
+          cp keys/https-gateway-apk.pem sdk/public-key.pem
+          chmod 600 sdk/private-key.pem
+
+      - name: Build package
+        run: |
+          rm -rf "sdk/package/${PKG_NAME}"
+          mkdir -p "sdk/package/${PKG_NAME}"
+          cp -r src Makefile "sdk/package/${PKG_NAME}/"
+          sed -i "s/^PKG_VERSION:=.*/PKG_VERSION:=${GITHUB_REF_NAME#v}/" \
+            "sdk/package/${PKG_NAME}/Makefile"
+          cd sdk
+          echo "CONFIG_PACKAGE_${PKG_NAME}=y" > .config
+          make defconfig
+          make "package/${PKG_NAME}/compile" V=s -j"$(nproc)"
+
+      - name: Build signed APK index
+        run: |
+          OUT="$GITHUB_WORKSPACE/feed-out/packages/${{ matrix.arch }}"
+          mkdir -p "$OUT"
+          find sdk/bin/packages -type f -name "${PKG_NAME}*.apk" -exec cp {} "$OUT/" \;
+          test -n "$(find "$OUT" -maxdepth 1 -name '*.apk' -print -quit)"
+          cd "$OUT"
+          "$GITHUB_WORKSPACE/sdk/staging_dir/host/bin/apk" mkndx \
+            --root "$GITHUB_WORKSPACE/sdk" \
+            --keys-dir "$GITHUB_WORKSPACE/sdk" \
+            --allow-untrusted \
+            --sign "$GITHUB_WORKSPACE/sdk/private-key.pem" \
+            --output Packages.adb *.apk
+          rm -f "$GITHUB_WORKSPACE/sdk/private-key.pem"
+
+      - name: Upload feed artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: feed-${{ matrix.arch }}
+          path: feed-out/
+          if-no-files-found: error
+
+  publish:
+    name: Publish signed feed
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Download feed artifacts
+        uses: actions/download-artifact@v7
+        with:
+          pattern: feed-*
+          merge-multiple: true
+          path: site
+
+      - name: Add public key and feed index page
+        run: |
+          mkdir -p site/keys
+          cp keys/https-gateway-apk.pem site/keys/
+          cat > site/index.html <<'EOF'
+          <!doctype html>
+          <meta charset="utf-8">
+          <title>HTTPS Gateway APK feed</title>
+          <h1>HTTPS Gateway APK feed</h1>
+          <p>Signed OpenWrt 25.12 APK packages.</p>
+          EOF
+
+      - name: Publish to GitHub Pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rm -rf /tmp/feed-pages
+          if git clone --quiet --depth 1 --branch gh-pages \
+              "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+              /tmp/feed-pages; then
+            find /tmp/feed-pages -mindepth 1 -maxdepth 1 -not -name .git -exec rm -rf {} +
+          else
+            mkdir -p /tmp/feed-pages
+            git -C /tmp/feed-pages init -q
+            git -C /tmp/feed-pages checkout -q --orphan gh-pages
+            git -C /tmp/feed-pages remote add origin \
+              "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          fi
+          cp -a site/. /tmp/feed-pages/
+          git -C /tmp/feed-pages config user.name github-actions[bot]
+          git -C /tmp/feed-pages config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git -C /tmp/feed-pages add -A
+          git -C /tmp/feed-pages commit -m "Publish signed feed ${GITHUB_REF_NAME}" || true
+          git -C /tmp/feed-pages push --force origin gh-pages
