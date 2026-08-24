@@ -2,12 +2,43 @@
 
 ## Prerequisites
 
-- OpenWrt 23.05+ or 25.x (x86_64 or ARM)
+- OpenWrt 23.05+ or 25.x
 - SSH access to the router (root)
 - A registered domain name (e.g. `example.com`)
 - DNS provider API credentials (Alibaba Cloud, Cloudflare, DNSPod, or GoDaddy)
 
-## Method 1: Pre-built Package (Recommended)
+## Method 1: Signed APK Feed (OpenWrt 25.x, ARM64)
+
+The signed feed is the recommended installation method for OpenWrt 25.x on `aarch64_cortex-a53` devices.
+
+### Confirm your architecture
+
+```sh
+ssh root@192.168.0.1 'cat /etc/apk/arch'
+# Expected: aarch64_cortex-a53
+```
+
+### Install the signing key and feed
+
+```sh
+ssh root@192.168.0.1 <<'EOF'
+wget -O /etc/apk/keys/https-gateway-apk.pem \
+	https://DawkliCrypto.github.io/luci-app-https-gateway/keys/https-gateway-apk.pem
+
+printf '%s/packages/%s/Packages.adb\n' \
+	'https://DawkliCrypto.github.io/luci-app-https-gateway' \
+	"$(cat /etc/apk/arch)" > /etc/apk/repositories.d/https-gateway.list
+
+apk update
+apk add luci-app-https-gateway
+EOF
+```
+
+The package dependencies are resolved through the router's configured OpenWrt repositories. After installation, open LuCI and go to **Services → HTTPS Gateway**.
+
+See [Signed APK Feed](05-Signed-Feed.md) for the feed URL and troubleshooting details.
+
+## Method 2: Pre-built Package (OpenWrt 23.x)
 
 Download the `.ipk` file matching your router's architecture from the [GitHub Releases](https://github.com/seamys/luci-app-https-gateway/releases) page.
 
@@ -15,29 +46,20 @@ Download the `.ipk` file matching your router's architecture from the [GitHub Re
 
 ```sh
 ssh root@192.168.0.1 'opkg print-architecture'
-# or for APK:
-ssh root@192.168.0.1 'cat /etc/apk/arch'
 ```
 
-### Install with opkg (OpenWrt 23.x)
+### Install with opkg
 
 ```sh
-scp luci-app-https-gateway_*_x86_64.ipk root@192.168.0.1:/tmp/
+scp luci-app-https-gateway_*.ipk root@192.168.0.1:/tmp/
 ssh root@192.168.0.1 'opkg install /tmp/luci-app-https-gateway_*.ipk'
-```
-
-### Install with APK (OpenWrt 25.x)
-
-```sh
-scp luci-app-https-gateway_*_x86_64.ipk root@192.168.0.1:/tmp/
-ssh root@192.168.0.1 'apk add --allow-untrusted /tmp/luci-app-https-gateway_*.ipk'
 ```
 
 Dependencies (`nginx-ssl`, `acme-acmesh`, etc.) are installed automatically.
 
 After installation, access LuCI → **Services → HTTPS Gateway**.
 
-## Method 2: Manual Deployment (Development)
+## Method 3: Manual Deployment (Development)
 
 ### Step 1: Install Dependencies
 
@@ -93,7 +115,7 @@ EOF
 
 Open `http://192.168.0.1` → navigate to **Services → HTTPS Gateway**. You should see the status dashboard.
 
-## Method 2: ImageBuilder (Production)
+## Method 4: ImageBuilder (Production)
 
 Include files in the ImageBuilder `files/` overlay:
 
@@ -117,7 +139,7 @@ Then build the image with these packages in your build configuration:
 nginx-ssl acme-acmesh acme-acmesh-dnsapi curl ca-bundle ca-certificates
 ```
 
-## Method 3: APK Package (SDK Build)
+## Method 5: APK Package (SDK Build)
 
 After building with the OpenWrt SDK:
 

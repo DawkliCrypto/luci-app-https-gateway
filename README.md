@@ -72,7 +72,26 @@ Auto-installed:
 
 ## 🚀 Installation
 
-### Pre-built Package (Recommended)
+### Signed APK Feed (OpenWrt 25.x, ARM64, Recommended)
+
+For OpenWrt 25.x devices reporting `aarch64_cortex-a53`, install from the signed APK feed:
+
+```sh
+ssh root@192.168.0.1 'cat /etc/apk/arch'
+ssh root@192.168.0.1 <<'EOF'
+wget -O /etc/apk/keys/https-gateway-apk.pem \
+	https://DawkliCrypto.github.io/luci-app-https-gateway/keys/https-gateway-apk.pem
+printf '%s/packages/%s/Packages.adb\n' \
+	'https://DawkliCrypto.github.io/luci-app-https-gateway' \
+	"$(cat /etc/apk/arch)" > /etc/apk/repositories.d/https-gateway.list
+apk update
+apk add luci-app-https-gateway
+EOF
+```
+
+See the [signed feed installation guide](docs/05-Signed-Feed.md) for details.
+
+### Pre-built Package (OpenWrt 23.x)
 
 Download the `.ipk` matching your router's architecture from the [Releases](https://github.com/seamys/luci-app-https-gateway/releases) page:
 
@@ -90,8 +109,6 @@ scp luci-app-https-gateway_*_x86_64.ipk root@192.168.0.1:/tmp/
 # Install (OpenWrt 23.x with opkg)
 ssh root@192.168.0.1 'opkg install /tmp/luci-app-https-gateway_*.ipk'
 
-# Or OpenWrt 25.x with APK
-ssh root@192.168.0.1 'apk add --allow-untrusted /tmp/luci-app-https-gateway_*.ipk'
 ```
 
 ### Manual Deployment (Development/Debug)
@@ -134,8 +151,8 @@ cp src/view/*.js                   files/www/luci-static/resources/view/https-ga
 # opkg (OpenWrt 23.x)
 opkg install luci-app-https-gateway_1.0.1-1_all.ipk
 
-# APK (OpenWrt 25.x)
-apk add --allow-untrusted luci-app-https-gateway_1.0.1-1_all.apk
+# APK (OpenWrt 25.x, locally built package)
+apk add --allow-untrusted luci-app-https-gateway_*.apk
 ```
 
 ## ⚡ Quick Configuration
