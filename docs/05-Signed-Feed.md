@@ -18,12 +18,12 @@ GitHub Pages must be enabled for the repository's `gh-pages` branch after the fi
 wget -O /etc/apk/keys/https-gateway-apk.pem \
   https://DawkliCrypto.github.io/luci-app-https-gateway/keys/https-gateway-apk.pem
 
-printf '%s/packages/%s/Packages.adb\n' \
-  'https://DawkliCrypto.github.io/luci-app-https-gateway' \
-  "$(cat /etc/apk/arch)" >> /etc/apk/repositories.d/customfeeds.list
+printf '%s\n' \
+  'https://DawkliCrypto.github.io/luci-app-https-gateway/packages/apk/Packages.adb' \
+  >> /etc/apk/repositories.d/customfeeds.list
 
 apk update
 apk add luci-app-https-gateway
 ```
 
-The repository URL must match the router architecture returned by `cat /etc/apk/arch`. The package still declares its normal dependencies, so `apk` resolves them from the configured OpenWrt repositories.
+The feed uses the fixed `packages/apk/` path. Confirm that `cat /etc/apk/arch` reports `aarch64_cortex-a53` before installing. The package still declares its normal dependencies, so `apk` resolves them from the configured OpenWrt repositories.

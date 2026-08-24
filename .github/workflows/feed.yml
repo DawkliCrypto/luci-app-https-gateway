@@ -73,7 +73,7 @@ jobs:
 
       - name: Build signed APK index
         run: |
-          OUT="$GITHUB_WORKSPACE/feed-out/packages/${{ matrix.arch }}"
+          OUT="$GITHUB_WORKSPACE/feed-out/packages/apk"
           mkdir -p "$OUT"
           find sdk/bin/packages -type f -name "${PKG_NAME}*.apk" -exec cp {} "$OUT/" \;
           test -n "$(find "$OUT" -maxdepth 1 -name '*.apk' -print -quit)"
