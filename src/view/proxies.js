@@ -92,7 +92,7 @@ return view.extend({
 			' <a href="' + L.url('admin/services/https-gateway/certificates') + '">' +
 			_('Manage Certificates') + '</a>');
 		o.rmempty = false;
-		o.render = function(section_id) {
+		o.renderWidget = function(section_id) {
 			var bases = certificateBases();
 			var current = this.cfgvalue(section_id) || '';
 			var parts = splitDomain(current, bases);
@@ -100,18 +100,7 @@ return view.extend({
 				bases.unshift(parts.base);
 			var prefixId = this.cbid(section_id) + '-subdomain';
 			var baseId = this.cbid(section_id) + '-base';
-			var valueId = this.cbid(section_id);
-			var value = (parts.subdomain ? parts.subdomain + '.' : '') + parts.base;
-			var updateValue = function() {
-				var prefix = document.getElementById(prefixId);
-				var base = document.getElementById(baseId);
-				var hidden = document.getElementById(valueId);
-				if (prefix && base && hidden)
-					hidden.value = (prefix.value ? prefix.value + '.' : '') + base.value;
-			};
-			return E('div', {}, [
-				E('input', { 'id': valueId, 'name': valueId, 'type': 'hidden', 'value': value }),
-				E('div', { 'style': 'display:flex;align-items:center;gap:0.5em;max-width:620px;width:100%' }, [
+			return E('div', { 'style': 'display:flex;align-items:center;gap:0.5em;max-width:620px;width:100%' }, [
 				E('input', {
 					'id': prefixId,
 					'class': 'cbi-input-text',
@@ -119,16 +108,19 @@ return view.extend({
 					'placeholder': _('Subdomain, e.g. nas'),
 					'value': parts.subdomain,
 					'style': 'width:210px;min-width:0;flex:1 1 210px',
-					'change': updateValue,
-					'keyup': updateValue
 				}),
 				E('span', { 'style': 'flex:0 0 auto' }, '.'),
-				E('select', { 'id': baseId, 'class': 'cbi-input-select', 'style': 'width:260px;min-width:0;flex:1 1 260px', 'change': updateValue },
+				E('select', { 'id': baseId, 'class': 'cbi-input-select', 'style': 'width:260px;min-width:0;flex:1 1 260px' },
 					bases.map(function(base) {
 						return E('option', { 'value': base, 'selected': base === parts.base }, base);
 					}))
-				])
 			]);
+		};
+		o.formvalue = function(section_id) {
+			var widget = this.map.findElement('id', this.cbid(section_id));
+			var prefix = widget ? widget.querySelector('[id$="-subdomain"]') : null;
+			var base = widget ? widget.querySelector('[id$="-base"]') : null;
+			return prefix && base ? (prefix.value ? prefix.value + '.' : '') + base.value : '';
 		};
 		/* Show an inline indicator in the table when no cert covers the domain */
 		o.textvalue = function(section_id) {
