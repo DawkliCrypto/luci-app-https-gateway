@@ -68,7 +68,7 @@ cat /etc/nginx/conf.d/https-gateway.conf
 |-------|-------|-----|
 | `cannot load certificate` | Cert not yet issued | Run `https-gateway issue` first |
 | `conflicting server name` | Duplicate domain in rules | Remove duplicate proxy rules |
-| `bind() to 0.0.0.0:443 failed` | Another process on port 443 | Stop uhttpd: `/etc/init.d/uhttpd stop` |
+| `bind() to 0.0.0.0:443 failed` | Another process on port 443 | Keep uhttpd running, confirm the gateway moved it to `127.0.0.1:8080`, then run `/etc/init.d/https_gateway restart` |
 
 ### LuCI Menu Not Showing
 
@@ -109,7 +109,7 @@ ubus list | grep https-gateway
 
 **Symptoms**: `https://192.168.0.1` returns nginx default page or error.
 
-**Explanation**: When the gateway is enabled, uhttpd moves to port 8080/8443.
+**Explanation**: When the gateway is enabled, uhttpd remains running but moves to `127.0.0.1:8080` so nginx can use ports 80/443.
 
 **Fix**:
 - uhttpd listens on `127.0.0.1:8080`, so it is intentionally not reachable directly from the LAN

@@ -163,7 +163,7 @@ From LuCI: Click **Save & Apply**, then use the **Reload Configuration** button 
 
 2. **DNS propagation**: If certificate issuance fails, try increasing `dns_sleep` to 300 seconds.
 
-3. **uhttpd port conflict**: When enabled, the gateway moves uhttpd from port 80/443 to 8080/8443 to free ports for nginx. When disabled, ports revert automatically.
+3. **uhttpd port conflict**: When enabled, the gateway keeps uhttpd running but moves its HTTP listener to `127.0.0.1:8080` so nginx can own ports 80/443. Use `http://127.0.0.1:8080` as the upstream for a router LuCI proxy rule. When disabled, the original uhttpd ports revert automatically.
 
 4. **Certificate storage**: Issued certificates are stored in `/etc/ssl/acme/`.
 
