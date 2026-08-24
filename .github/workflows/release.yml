@@ -113,7 +113,7 @@ jobs:
             --keys-dir "$GITHUB_WORKSPACE/sdk" \
             --allow-untrusted \
             --sign "$GITHUB_WORKSPACE/sdk/private-key.pem" \
-            --output Packages.adb *.apk
+            --output packages.adb *.apk
           rm -f "$GITHUB_WORKSPACE/sdk/private-key.pem"
 
       - name: Collect package artifacts

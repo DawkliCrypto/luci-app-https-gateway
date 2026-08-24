@@ -26,7 +26,7 @@ wget -O /etc/apk/keys/https-gateway-apk.pem \
 	https://DawkliCrypto.github.io/luci-app-https-gateway/keys/https-gateway-apk.pem
 
 printf '%s\n' \
-	'https://DawkliCrypto.github.io/luci-app-https-gateway/packages/apk/Packages.adb' \
+	'https://DawkliCrypto.github.io/luci-app-https-gateway/packages/apk/packages.adb' \
 	>> /etc/apk/repositories.d/customfeeds.list
 
 apk update
