@@ -6,9 +6,13 @@ on:
       - main
     tags:
       - 'v*'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/**'
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   PKG_NAME: luci-app-https-gateway
@@ -80,14 +84,41 @@ jobs:
       - name: Build package
         working-directory: sdk
         run: |
+          rm -f bin/packages/*/*/${{ env.PKG_NAME }}*.apk
           echo "CONFIG_PACKAGE_luci-app-https-gateway=y" > .config
           make defconfig 2>/dev/null
           make package/${{ env.PKG_NAME }}/compile V=s -j$(nproc) || \
           make package/${{ env.PKG_NAME }}/compile V=s -j1
 
-      - name: Collect artifacts
+      - name: Install APK signing key
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          APK_SEC_PEM: ${{ secrets.APK_SEC_PEM }}
         run: |
-          mkdir -p dist
+          test -n "$APK_SEC_PEM"
+          printf '%s\n' "$APK_SEC_PEM" > sdk/private-key.pem
+          cp keys/https-gateway-apk.pem sdk/public-key.pem
+          chmod 600 sdk/private-key.pem
+
+      - name: Build signed APK feed index
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          mkdir -p feed-out/packages/apk
+          find sdk/bin/packages -type f -name "${PKG_NAME}*.apk" \
+            -exec cp {} feed-out/packages/apk/ \;
+          test -n "$(find feed-out/packages/apk -maxdepth 1 -name '*.apk' -print -quit)"
+          cd feed-out/packages/apk
+          "$GITHUB_WORKSPACE/sdk/staging_dir/host/bin/apk" mkndx \
+            --root "$GITHUB_WORKSPACE/sdk" \
+            --keys-dir "$GITHUB_WORKSPACE/sdk" \
+            --allow-untrusted \
+            --sign "$GITHUB_WORKSPACE/sdk/private-key.pem" \
+            --output Packages.adb *.apk
+          rm -f "$GITHUB_WORKSPACE/sdk/private-key.pem"
+
+      - name: Collect package artifacts
+        run: |
+          mkdir -p dist feed-out
           find sdk/bin -name "${PKG_NAME}*.apk" -exec cp {} dist/ \;
           for f in dist/*.apk; do
             [ -f "$f" ] || continue
@@ -99,13 +130,17 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v7
         with:
-          name: apk-${{ matrix.arch }}
-          path: dist/*.apk
+          name: package-output-${{ matrix.arch }}
+          path: |
+            dist/
+            feed-out/
 
   release:
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -117,19 +152,55 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v7
         with:
+          name: package-output-aarch64_cortex-a53
           path: artifacts
-          merge-multiple: true
 
       - name: Prepare release assets
         run: |
           mkdir -p release
-          cp artifacts/*.apk release/ 2>/dev/null || true
+          cp artifacts/dist/*.apk release/
           VERSION="${{ steps.version.outputs.version }}"
           ARCHIVE="${{ env.PKG_NAME }}_${VERSION}_src.tar.gz"
           mkdir -p "tmp/${{ env.PKG_NAME }}"
           cp -r src Makefile "tmp/${{ env.PKG_NAME }}/"
           tar -czf "release/${ARCHIVE}" -C tmp "${{ env.PKG_NAME }}"
           ls -la release/
+
+      - name: Prepare signed feed site
+        run: |
+          mkdir -p site/packages/apk site/keys
+          cp artifacts/feed-out/packages/apk/* site/packages/apk/
+          cp keys/https-gateway-apk.pem site/keys/
+          cat > site/index.html <<'EOF'
+          <!doctype html>
+          <meta charset="utf-8">
+          <title>HTTPS Gateway APK feed</title>
+          <h1>HTTPS Gateway APK feed</h1>
+          <p>Signed OpenWrt 25.12 APK packages.</p>
+          EOF
+
+      - name: Publish signed feed to GitHub Pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rm -rf /tmp/feed-pages
+          if git clone --quiet --depth 1 --branch gh-pages \
+              "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+              /tmp/feed-pages; then
+            find /tmp/feed-pages -mindepth 1 -maxdepth 1 -not -name .git -exec rm -rf {} +
+          else
+            mkdir -p /tmp/feed-pages
+            git -C /tmp/feed-pages init -q
+            git -C /tmp/feed-pages checkout -q --orphan gh-pages
+            git -C /tmp/feed-pages remote add origin \
+              "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          fi
+          cp -a site/. /tmp/feed-pages/
+          git -C /tmp/feed-pages config user.name github-actions[bot]
+          git -C /tmp/feed-pages config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git -C /tmp/feed-pages add -A
+          git -C /tmp/feed-pages commit -m "Publish signed feed ${GITHUB_REF_NAME}" || true
+          git -C /tmp/feed-pages push --force origin gh-pages
 
       - name: Create Release
         uses: softprops/action-gh-release@v3.0.2
