@@ -32,6 +32,31 @@ return view.extend({
 			});
 		}
 
+		function certificateBases() {
+			var bases = [];
+			certDomains.forEach(function(domain) {
+				if (!domain) return;
+				domain = domain.indexOf('*.') === 0 ? domain.slice(2) : domain;
+				if (bases.indexOf(domain) === -1)
+					bases.push(domain);
+			});
+			return bases;
+		}
+
+		function splitDomain(domain, bases) {
+			var selected = '';
+			bases.forEach(function(base) {
+				if (domain === base || domain.slice(-(base.length + 1)) === '.' + base) {
+					if (!selected || base.length > selected.length)
+						selected = base;
+				}
+			});
+			if (selected)
+				return { subdomain: domain === selected ? '' : domain.slice(0, -(selected.length + 1)), base: selected };
+			var dot = domain.indexOf('.');
+			return { subdomain: dot > 0 ? domain.slice(0, dot) : '', base: dot > 0 ? domain.slice(dot + 1) : domain };
+		}
+
 		var m, s, o;
 
 		m = new form.Map('https_gateway', _('HTTPS Gateway - Proxy Rules'),
@@ -55,23 +80,47 @@ return view.extend({
 			_('A friendly name for this rule, e.g. "NAS WebUI", "Home Assistant".'));
 		o.placeholder = 'My Service';
 		o.width = '15%';
-		o.rmempty = false;
+		o.rmempty = true;
 		/* Pre-existing rules (named UCI sections) have no name option;
 		   fall back to the section id so the table stays readable. */
 		o.textvalue = function(section_id) {
 			return this.cfgvalue(section_id) || section_id;
 		};
-		o.validate = function(section_id, value) {
-			if (!value || !value.trim())
-				return _('Name cannot be empty');
-			return true;
-		};
 
 		o = s.option(form.Value, 'domain', _('Domain'),
-			_('Domain for this rule (must be covered by a configured certificate).') +
+			_('Enter the subdomain and select a configured certificate domain.') +
 			' <a href="' + L.url('admin/services/https-gateway/certificates') + '">' +
 			_('Manage Certificates') + '</a>');
 		o.rmempty = false;
+		o.render = function(section_id) {
+			var bases = certificateBases();
+			var current = this.cfgvalue(section_id) || '';
+			var parts = splitDomain(current, bases);
+			if (bases.indexOf(parts.base) === -1)
+				bases.unshift(parts.base);
+			var prefixId = this.cbid(section_id) + '-subdomain';
+			var baseId = this.cbid(section_id) + '-base';
+			return E('div', { 'class': 'cbi-value-field' }, [
+				E('input', {
+					'id': prefixId,
+					'class': 'cbi-input-text',
+					'type': 'text',
+					'placeholder': _('Subdomain, e.g. nas'),
+					'value': parts.subdomain,
+					'style': 'width:45%;margin-right:0.5em'
+				}),
+				E('span', {}, '.'),
+				E('select', { 'id': baseId, 'class': 'cbi-input-select', 'style': 'width:45%;margin-left:0.5em' },
+					bases.map(function(base) {
+						return E('option', { 'value': base, 'selected': base === parts.base }, base);
+					}))
+			]);
+		};
+		o.formvalue = function(section_id) {
+			var prefix = document.getElementById(this.cbid(section_id) + '-subdomain');
+			var base = document.getElementById(this.cbid(section_id) + '-base');
+			return prefix && base ? (prefix.value ? prefix.value + '.' : '') + base.value : '';
+		};
 		/* Show an inline indicator in the table when no cert covers the domain */
 		o.textvalue = function(section_id) {
 			var domain = this.cfgvalue(section_id);

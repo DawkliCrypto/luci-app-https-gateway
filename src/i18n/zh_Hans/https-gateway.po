@@ -195,8 +195,11 @@ msgstr "名称"
 msgid "A friendly name for this rule, e.g. \"NAS WebUI\", \"Home Assistant\"."
 msgstr "便于识别的规则名称，如 \"NAS WebUI\"、\"Home Assistant\"。"
 
-msgid "Domain for this rule (must be covered by a configured certificate)."
-msgstr "此规则使用的域名（必须有对应的证书覆盖）。"
+msgid "Enter the subdomain and select a configured certificate domain."
+msgstr "请输入子域名并选择已配置的证书域名。"
+
+msgid "Subdomain, e.g. nas"
+msgstr "子域名，例如 nas"
 
 msgid "Enter a valid domain (no wildcards), e.g. nas.example.com"
 msgstr "请输入有效域名（不含通配符），如: nas.example.com"

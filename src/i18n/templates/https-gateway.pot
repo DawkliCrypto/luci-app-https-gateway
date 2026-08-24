@@ -256,7 +256,11 @@ msgid "A friendly name for this rule, e.g. \"NAS WebUI\", \"Home Assistant\"."
 msgstr ""
 
 #: src/view/proxies.js
-msgid "Domain for this rule (must be covered by a configured certificate)."
+msgid "Enter the subdomain and select a configured certificate domain."
+msgstr ""
+
+#: src/view/proxies.js
+msgid "Subdomain, e.g. nas"
 msgstr ""
 
 #: src/view/proxies.js
