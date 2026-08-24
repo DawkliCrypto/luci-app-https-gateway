@@ -27,7 +27,7 @@ wget -O /etc/apk/keys/https-gateway-apk.pem \
 
 printf '%s/packages/%s/Packages.adb\n' \
 	'https://DawkliCrypto.github.io/luci-app-https-gateway' \
-	"$(cat /etc/apk/arch)" > /etc/apk/repositories.d/https-gateway.list
+	"$(cat /etc/apk/arch)" >> /etc/apk/repositories.d/customfeeds.list
 
 apk update
 apk add luci-app-https-gateway
