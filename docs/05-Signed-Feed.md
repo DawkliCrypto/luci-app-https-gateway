@@ -35,7 +35,7 @@ Refresh the repository index before upgrading. `--force-overwrite` only handles 
 ```sh
 apk update --force-refresh
 apk policy luci-app-https-gateway
-apk upgrade --force-overwrite luci-app-https-gateway
+apk upgrade --available --force-overwrite luci-app-https-gateway
 ```
 
 The policy output should show `0.3.14-r1` or a newer version as available. If it does not, check the configured feed and architecture:
@@ -46,6 +46,8 @@ cat /etc/apk/repositories.d/customfeeds.list
 apk update --force-refresh
 apk list --available luci-app-https-gateway
 ```
+
+`--available` is important when the installed package came from a local APK file. It removes the exact-file constraint and allows APK to replace it with the repository version.
 
 The feed URL must be exactly:
 
