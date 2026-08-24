@@ -117,7 +117,7 @@ return view.extend({
 			]);
 		};
 		o.formvalue = function(section_id) {
-			var widget = this.map.findElement('id', this.cbid(section_id));
+			var widget = this.map.findElement('data-field', this.cbid(section_id));
 			var prefix = widget ? widget.querySelector('[id$="-subdomain"]') : null;
 			var base = widget ? widget.querySelector('[id$="-base"]') : null;
 			return prefix && base ? (prefix.value ? prefix.value + '.' : '') + base.value : '';
