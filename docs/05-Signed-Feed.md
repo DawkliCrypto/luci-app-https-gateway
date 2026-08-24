@@ -1,8 +1,7 @@
 # Signed APK Feed
 
-The project publishes signed OpenWrt 25.x APK packages for supported architectures:
+The project publishes a signed OpenWrt 25.x APK package for:
 
-- `x86_64`
 - `aarch64_cortex-a53`
 
 The feed is published by the `Signed APK Feed` GitHub Actions workflow on every `v*` tag. The repository's private signing key is stored only in the GitHub Actions secret `APK_SEC_PEM`; the public key is available at:

@@ -21,9 +21,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - arch: x86_64
-            sdk_target: x86/64
-            sdk_name: openwrt-sdk-25.12.5-x86-64_gcc-14.3.0_musl.Linux-x86_64
           - arch: aarch64_cortex-a53
             sdk_target: mediatek/filogic
             sdk_name: openwrt-sdk-25.12.5-mediatek-filogic_gcc-14.3.0_musl.Linux-x86_64
