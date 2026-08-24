@@ -100,17 +100,17 @@ return view.extend({
 				bases.unshift(parts.base);
 			var prefixId = this.cbid(section_id) + '-subdomain';
 			var baseId = this.cbid(section_id) + '-base';
-			return E('div', { 'class': 'cbi-value-field' }, [
+			return E('div', { 'style': 'display:flex;align-items:center;gap:0.5em;max-width:620px;width:100%' }, [
 				E('input', {
 					'id': prefixId,
 					'class': 'cbi-input-text',
 					'type': 'text',
 					'placeholder': _('Subdomain, e.g. nas'),
 					'value': parts.subdomain,
-					'style': 'width:45%;margin-right:0.5em'
+					'style': 'width:210px;min-width:0;flex:1 1 210px'
 				}),
-				E('span', {}, '.'),
-				E('select', { 'id': baseId, 'class': 'cbi-input-select', 'style': 'width:45%;margin-left:0.5em' },
+				E('span', { 'style': 'flex:0 0 auto' }, '.'),
+				E('select', { 'id': baseId, 'class': 'cbi-input-select', 'style': 'width:260px;min-width:0;flex:1 1 260px' },
 					bases.map(function(base) {
 						return E('option', { 'value': base, 'selected': base === parts.base }, base);
 					}))
