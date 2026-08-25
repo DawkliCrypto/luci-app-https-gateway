@@ -175,6 +175,30 @@ return view.extend({
 		o.editable = true;
 		o.width = '1%';
 
+		o = s.option(form.Value, 'header_host', _('Host Header'),
+			_('Value for proxy_set_header Host. Leave empty to use default: $host'));
+		o.placeholder = '$host';
+		o.rmempty = true;
+		o.validate = function(section_id, value) {
+			if (!value)
+				return true;
+			if (!/^[^;{}\r\n]+$/.test(value))
+				return _('Invalid header value: semicolon and braces are not allowed');
+			return true;
+		};
+
+		o = s.option(form.Value, 'header_x_forwarded_proto', _('X-Forwarded-Proto Header'),
+			_('Value for proxy_set_header X-Forwarded-Proto. Leave empty to use default: https'));
+		o.placeholder = 'https';
+		o.rmempty = true;
+		o.validate = function(section_id, value) {
+			if (!value)
+				return true;
+			if (!/^[^;{}\r\n]+$/.test(value))
+				return _('Invalid header value: semicolon and braces are not allowed');
+			return true;
+		};
+
 		o = s.option(form.Value, 'max_body_size', _('Max Body Size'),
 			_('Maximum client request body, e.g. 50m. Maps to nginx client_max_body_size. Leave empty for the nginx default (1m); 0 disables the limit.'));
 		o.placeholder = '50m';
@@ -184,6 +208,18 @@ return view.extend({
 				return true;
 			if (!/^[0-9]+[kKmMgG]?$/.test(value))
 				return _('Enter a size like 50m, 1g, or 0 (digits with optional k/m/g suffix)');
+			return true;
+		};
+
+		o = s.option(form.DynamicList, 'custom_header', _('Custom Headers'),
+			_('Optional extra proxy_set_header directives. Format: Header-Name value. Example: X-Forwarded-Proto $scheme. These are appended last and can override defaults.'));
+		o.placeholder = 'X-Forwarded-Proto $scheme';
+		o.datatype = 'string';
+		o.validate = function(section_id, value) {
+			if (!value)
+				return true;
+			if (!/^[A-Za-z0-9-]+\s+[^;{}\r\n]+$/.test(value))
+				return _('Use format: Header-Name value (semicolon and braces are not allowed)');
 			return true;
 		};
 

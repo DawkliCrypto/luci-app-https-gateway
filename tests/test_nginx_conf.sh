@@ -37,16 +37,19 @@ generate_location_block() {
 	local upstream="$2"
 	local websocket="${3:-0}"
 	local max_body_size="${4:-}"
+    local header_host="${5:-\$host}"
+    local header_x_forwarded_proto="${6:-https}"
+    local custom_headers="${7:-}"
 
 	cat <<EOF
     location ${location} {
         proxy_pass ${upstream};
         proxy_redirect / ${location};
         proxy_http_version 1.1;
-        proxy_set_header Host \$host;
+    proxy_set_header Host ${header_host};
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto https;
+    proxy_set_header X-Forwarded-Proto ${header_x_forwarded_proto};
 EOF
 
 	[ -n "$max_body_size" ] && echo "        client_max_body_size ${max_body_size};"
@@ -63,6 +66,12 @@ EOF
         proxy_read_timeout 300;
 EOF
 	fi
+
+    if [ -n "$custom_headers" ]; then
+        echo "$custom_headers" | while IFS= read -r header; do
+            [ -n "$header" ] && echo "        proxy_set_header ${header};"
+        done
+    fi
 
 	echo "    }"
 }
@@ -168,6 +177,17 @@ assert_contains "$OUTPUT" "client_max_body_size 50m;" "body size directive emitt
 it "omits client_max_body_size when empty"
 OUTPUT=$(generate_location_block "/" "http://192.168.0.100:8095" "0" "")
 assert_not_contains "$OUTPUT" "client_max_body_size" "no body size directive by default"
+
+it "appends custom proxy headers"
+OUTPUT=$(generate_location_block "/" "http://127.0.0.1:8080" "1" "" "\$host" "https" "X-Forwarded-Proto \$scheme
+Connection \"keep-alive\"")
+assert_contains "$OUTPUT" 'proxy_set_header X-Forwarded-Proto $scheme;' "custom header emitted"
+assert_contains "$OUTPUT" 'proxy_set_header Connection "keep-alive";' "custom Connection override emitted"
+
+it "overrides Host and X-Forwarded-Proto headers when configured"
+OUTPUT=$(generate_location_block "/" "http://127.0.0.1:8080" "0" "" "backend.internal" "\$scheme")
+assert_contains "$OUTPUT" 'proxy_set_header Host backend.internal;' "Host override emitted"
+assert_contains "$OUTPUT" 'proxy_set_header X-Forwarded-Proto $scheme;' "X-Forwarded-Proto override emitted"
 
 # ============================================================
 describe "nginx config security"

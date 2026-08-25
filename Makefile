@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-https-gateway
 # Placeholder — overridden by CI from the release tag (vX.Y.Z)
-PKG_VERSION:=0.3.9
+PKG_VERSION:=0.3.18
 PKG_RELEASE:=1
 
 PKG_LICENSE:=MIT

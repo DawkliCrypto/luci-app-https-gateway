@@ -41,6 +41,15 @@ validate_size() {
 	echo "$1" | grep -qE '^[0-9]+[kKmMgG]?$' || return 1
 }
 
+validate_header_value() {
+	[ -n "$1" ] || return 1
+	echo "$1" | grep -qE '^[^;{}[:cntrl:]]+$' || return 1
+}
+
+validate_proxy_header() {
+	echo "$1" | grep -qE '^[A-Za-z0-9-]+[[:space:]]+[^;{}[:cntrl:]]+$' || return 1
+}
+
 get_cert_path() {
 	local domain="$1"
 	local base="/etc/ssl/acme"
@@ -284,12 +293,15 @@ _generate_location() {
 	local target_domain="$2"
 
 	local enabled domain location upstream websocket max_body_size
+	local header_host header_x_forwarded_proto
 	config_get enabled "$section" enabled '1'
 	config_get domain "$section" domain ''
 	config_get location "$section" location ''
 	config_get upstream "$section" upstream ''
 	config_get websocket "$section" websocket '0'
 	config_get max_body_size "$section" max_body_size ''
+	config_get header_host "$section" header_host '$host'
+	config_get header_x_forwarded_proto "$section" header_x_forwarded_proto 'https'
 
 	[ "$enabled" = "1" ] || return 0
 	[ "$domain" = "$target_domain" ] || return 0
@@ -304,9 +316,20 @@ _generate_location() {
 		log "WARNING: Invalid upstream '$upstream' in proxy '$section', skipping"
 		return 0
 	}
+
 	if [ -n "$max_body_size" ] && ! validate_size "$max_body_size"; then
 		log "WARNING: Invalid max_body_size '$max_body_size' in proxy '$section', ignoring"
 		max_body_size=""
+	fi
+
+	if ! validate_header_value "$header_host"; then
+		log "WARNING: Invalid header_host '$header_host' in proxy '$section', using default '\$host'"
+		header_host='$host'
+	fi
+
+	if ! validate_header_value "$header_x_forwarded_proto"; then
+		log "WARNING: Invalid header_x_forwarded_proto '$header_x_forwarded_proto' in proxy '$section', using default 'https'"
+		header_x_forwarded_proto='https'
 	fi
 
 	cat <<EOF
@@ -314,10 +337,10 @@ _generate_location() {
         proxy_pass ${upstream};
 		proxy_redirect / ${location};
         proxy_http_version 1.1;
-        proxy_set_header Host \$host;
+		proxy_set_header Host ${header_host};
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto https;
+		proxy_set_header X-Forwarded-Proto ${header_x_forwarded_proto};
 EOF
 
 	[ -n "$max_body_size" ] && echo "        client_max_body_size ${max_body_size};"
@@ -335,8 +358,21 @@ EOF
 EOF
 	fi
 
+	config_list_foreach "$section" custom_header _emit_custom_proxy_header "$section"
+
 	echo "    }"
 	echo ""
+}
+
+_emit_custom_proxy_header() {
+	local header_line="$1"
+	local section="$2"
+
+	if validate_proxy_header "$header_line"; then
+		echo "        proxy_set_header ${header_line};"
+	else
+		log "WARNING: Invalid custom_header '$header_line' in proxy '$section', skipping"
+	fi
 }
 
 # --- DNS Management ---

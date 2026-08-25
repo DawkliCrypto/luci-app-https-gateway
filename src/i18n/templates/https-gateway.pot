@@ -304,6 +304,26 @@ msgid "Enable Upgrade/Connection headers for WebSocket long-lived connections."
 msgstr ""
 
 #: src/view/proxies.js
+msgid "Host Header"
+msgstr ""
+
+#: src/view/proxies.js
+msgid "Value for proxy_set_header Host. Leave empty to use default: $host"
+msgstr ""
+
+#: src/view/proxies.js
+msgid "X-Forwarded-Proto Header"
+msgstr ""
+
+#: src/view/proxies.js
+msgid "Value for proxy_set_header X-Forwarded-Proto. Leave empty to use default: https"
+msgstr ""
+
+#: src/view/proxies.js
+msgid "Invalid header value: semicolon and braces are not allowed"
+msgstr ""
+
+#: src/view/proxies.js
 msgid "Max Body Size"
 msgstr ""
 
@@ -313,6 +333,18 @@ msgstr ""
 
 #: src/view/proxies.js
 msgid "Enter a size like 50m, 1g, or 0 (digits with optional k/m/g suffix)"
+msgstr ""
+
+#: src/view/proxies.js
+msgid "Custom Headers"
+msgstr ""
+
+#: src/view/proxies.js
+msgid "Optional extra proxy_set_header directives. Format: Header-Name value. Example: X-Forwarded-Proto $scheme. These are appended last and can override defaults."
+msgstr ""
+
+#: src/view/proxies.js
+msgid "Use format: Header-Name value (semicolon and braces are not allowed)"
 msgstr ""
 
 #: src/share/menu.d/luci-app-https-gateway.json

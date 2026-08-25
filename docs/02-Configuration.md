@@ -82,7 +82,10 @@ Each proxy rule maps a domain + path to a backend upstream.
 | `location` | string | `/` | URL path prefix |
 | `upstream` | string | — | Backend address (e.g. `http://192.168.0.100:5000`) |
 | `websocket` | bool | `0` | Enable WebSocket Upgrade headers |
+| `header_host` | string | `$host` | Value for `proxy_set_header Host` |
+| `header_x_forwarded_proto` | string | `https` | Value for `proxy_set_header X-Forwarded-Proto` |
 | `max_body_size` | string | — | Max client request body, e.g. `50m` (nginx `client_max_body_size`). Empty = nginx default (1m); `0` = unlimited |
+| `custom_header` | list(string) | — | Extra `proxy_set_header` entries. Format: `Header-Name value` (e.g. `X-Forwarded-Proto $scheme`) |
 
 ### Example: Proxy NAS to HTTPS
 
@@ -94,6 +97,11 @@ uci set https_gateway.@proxy[-1].domain='nas.example.com'
 uci set https_gateway.@proxy[-1].location='/'
 uci set https_gateway.@proxy[-1].upstream='http://192.168.0.100:5000'
 uci set https_gateway.@proxy[-1].websocket='0'
+# Optional dedicated header overrides
+uci set https_gateway.@proxy[-1].header_host='$host'
+uci set https_gateway.@proxy[-1].header_x_forwarded_proto='$scheme'
+# Optional custom header overrides/additions
+uci add_list https_gateway.@proxy[-1].custom_header='X-Forwarded-Proto $scheme'
 uci commit https_gateway
 ```
 
@@ -107,6 +115,8 @@ uci set https_gateway.@proxy[-1].domain='ha.example.com'
 uci set https_gateway.@proxy[-1].location='/'
 uci set https_gateway.@proxy[-1].upstream='http://192.168.0.200:8123'
 uci set https_gateway.@proxy[-1].websocket='1'
+# Optional: override Connection header emitted for WebSocket
+uci add_list https_gateway.@proxy[-1].custom_header='Connection "upgrade"'
 uci commit https_gateway
 ```
 

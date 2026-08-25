@@ -231,6 +231,21 @@ msgstr "WebSocket"
 msgid "Enable Upgrade/Connection headers for WebSocket long-lived connections."
 msgstr "开启后添加 Upgrade/Connection 头，支持 WebSocket 长连接。"
 
+msgid "Host Header"
+msgstr "Host 请求头"
+
+msgid "Value for proxy_set_header Host. Leave empty to use default: $host"
+msgstr "proxy_set_header Host 的值。留空则使用默认值：$host"
+
+msgid "X-Forwarded-Proto Header"
+msgstr "X-Forwarded-Proto 请求头"
+
+msgid "Value for proxy_set_header X-Forwarded-Proto. Leave empty to use default: https"
+msgstr "proxy_set_header X-Forwarded-Proto 的值。留空则使用默认值：https"
+
+msgid "Invalid header value: semicolon and braces are not allowed"
+msgstr "请求头值无效：不允许分号和花括号"
+
 msgid "Max Body Size"
 msgstr "最大请求体"
 
@@ -239,6 +254,15 @@ msgstr "客户端请求体上限，例如 50m。对应 nginx client_max_body_siz
 
 msgid "Enter a size like 50m, 1g, or 0 (digits with optional k/m/g suffix)"
 msgstr "请输入如 50m、1g 或 0 的大小（数字，可带 k/m/g 后缀）"
+
+msgid "Custom Headers"
+msgstr "自定义请求头"
+
+msgid "Optional extra proxy_set_header directives. Format: Header-Name value. Example: X-Forwarded-Proto $scheme. These are appended last and can override defaults."
+msgstr "可选的额外 proxy_set_header 指令。格式：Header-Name value。例如：X-Forwarded-Proto $scheme。会追加在最后，可覆盖默认值。"
+
+msgid "Use format: Header-Name value (semicolon and braces are not allowed)"
+msgstr "请使用格式：Header-Name value（不允许分号和花括号）"
 
 msgid "HTTPS Gateway"
 msgstr "HTTPS 网关"

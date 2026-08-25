@@ -20,6 +20,15 @@ validate_upstream() {
 	echo "$1" | grep -qE '^https?://[][a-zA-Z0-9.:-]+(/[^ ]*)?$' || return 1
 }
 
+validate_header_value() {
+	[ -n "$1" ] || return 1
+	echo "$1" | grep -qE '^[^;{}[:cntrl:]]+$' || return 1
+}
+
+validate_proxy_header() {
+	echo "$1" | grep -qE '^[A-Za-z0-9-]+[[:space:]]+[^;{}[:cntrl:]]+$' || return 1
+}
+
 # ============================================================
 describe "validate_domain"
 # ============================================================
@@ -172,6 +181,56 @@ assert_exit_code 1 validate_upstream "http://"
 
 it "rejects websocket protocol"
 assert_exit_code 1 validate_upstream "ws://192.168.0.1:8080"
+
+# ============================================================
+describe "validate_header_value"
+# ============================================================
+
+it "accepts literal value"
+assert_exit_code 0 validate_header_value "https"
+
+it "accepts nginx variable"
+assert_exit_code 0 validate_header_value "\$scheme"
+
+it "accepts quoted value"
+assert_exit_code 0 validate_header_value "\"upgrade\""
+
+it "rejects empty string"
+assert_exit_code 1 validate_header_value ""
+
+it "rejects semicolon"
+assert_exit_code 1 validate_header_value "value;"
+
+it "rejects braces"
+assert_exit_code 1 validate_header_value "{value}"
+
+# ============================================================
+describe "validate_proxy_header"
+# ============================================================
+
+it "accepts standard literal value"
+assert_exit_code 0 validate_proxy_header "X-Forwarded-Proto https"
+
+it "accepts nginx variable value"
+assert_exit_code 0 validate_proxy_header "Host \$host"
+
+it "accepts quoted value"
+assert_exit_code 0 validate_proxy_header "Connection \"upgrade\""
+
+it "accepts multi-word value"
+assert_exit_code 0 validate_proxy_header "X-Custom some value"
+
+it "rejects empty string"
+assert_exit_code 1 validate_proxy_header ""
+
+it "rejects header without value"
+assert_exit_code 1 validate_proxy_header "X-Only"
+
+it "rejects semicolon"
+assert_exit_code 1 validate_proxy_header "X-Bad value;"
+
+it "rejects braces"
+assert_exit_code 1 validate_proxy_header "X-Bad {value}"
 
 # ============================================================
 test_summary

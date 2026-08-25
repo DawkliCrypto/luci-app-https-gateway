@@ -69,5 +69,31 @@ assert_match "zero (unlimited)" "$SIZE_RE" "0"
 ! echo "abc" | grep -qE "$SIZE_RE" && { PASS=$((PASS+1)); echo "  ✓ rejects non-numeric"; } || { FAIL=$((FAIL+1)); echo "  ✗ rejects non-numeric"; }
 
 echo ""
+
+# Test: validate_proxy_header
+echo "[5] Custom header validation regex"
+HEADER_RE='^[A-Za-z0-9-]+[[:space:]]+[^;{}[:cntrl:]]+$'
+
+assert_match "standard forwarded proto" "$HEADER_RE" "X-Forwarded-Proto https"
+assert_match "nginx variable value" "$HEADER_RE" "Host \$host"
+assert_match "quoted value" "$HEADER_RE" "Connection \"upgrade\""
+! echo "Bad_Header value" | grep -qE "$HEADER_RE" && { PASS=$((PASS+1)); echo "  ✓ rejects invalid header name"; } || { FAIL=$((FAIL+1)); echo "  ✗ rejects invalid header name"; }
+! echo "X-Test value;" | grep -qE "$HEADER_RE" && { PASS=$((PASS+1)); echo "  ✓ rejects semicolon"; } || { FAIL=$((FAIL+1)); echo "  ✗ rejects semicolon"; }
+! echo "X-Test {value}" | grep -qE "$HEADER_RE" && { PASS=$((PASS+1)); echo "  ✓ rejects braces"; } || { FAIL=$((FAIL+1)); echo "  ✗ rejects braces"; }
+
+echo ""
+
+# Test: validate_header_value
+echo "[6] Dedicated header value validation regex"
+HEADER_VALUE_RE='^[^;{}[:cntrl:]]+$'
+
+assert_match "literal value" "$HEADER_VALUE_RE" "https"
+assert_match "nginx variable" "$HEADER_VALUE_RE" "\$scheme"
+assert_match "quoted value" "$HEADER_VALUE_RE" "\"upgrade\""
+! echo "" | grep -qE "$HEADER_VALUE_RE" && { PASS=$((PASS+1)); echo "  ✓ rejects empty value"; } || { FAIL=$((FAIL+1)); echo "  ✗ rejects empty value"; }
+! echo "value;" | grep -qE "$HEADER_VALUE_RE" && { PASS=$((PASS+1)); echo "  ✓ rejects semicolon"; } || { FAIL=$((FAIL+1)); echo "  ✗ rejects semicolon"; }
+! echo "{value}" | grep -qE "$HEADER_VALUE_RE" && { PASS=$((PASS+1)); echo "  ✓ rejects braces"; } || { FAIL=$((FAIL+1)); echo "  ✗ rejects braces"; }
+
+echo ""
 echo "=== Results: ${PASS} passed, ${FAIL} failed ==="
 [ "$FAIL" -eq 0 ] && exit 0 || exit 1
